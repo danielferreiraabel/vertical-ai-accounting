@@ -59,3 +59,11 @@ async def categorize_expense(
 
     except Exception as e:
         return {"erro": str(e)}
+from db import get_client_info  # já deve estar no topo
+
+@app.get("/me")
+def get_my_info(x_api_key: str = Header(...)):
+    info = get_client_info(x_api_key)
+    if info:
+        return info
+    raise HTTPException(status_code=403, detail="Chave inválida.")
