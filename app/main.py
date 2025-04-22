@@ -17,13 +17,18 @@ def ping():
 @app.post("/categorize")
 async def categorize_expense(item: ExpenseIn):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Pode mudar para gpt-4o-mini depois que funcionar
+        client = openai.OpenAI(api_key=openai.api_key)
+
+        chat_completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are an accounting assistant."},
                 {"role": "user", "content": f"Classify this expense: {item.description}"}
             ]
         )
-        return {"category": response.choices[0].message.content.strip()}
+
+        return {"category": chat_completion.choices[0].message.content.strip()}
+
     except Exception as e:
         return {"error": str(e)}
+
