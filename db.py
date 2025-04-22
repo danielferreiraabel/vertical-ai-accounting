@@ -35,4 +35,21 @@ def increment_usage(api_key):
     cursor.execute("UPDATE clients SET usage_count = usage_count + 1 WHERE api_key = ?", (api_key,))
     conn.commit()
     conn.close()
+# Retorna dados do cliente
+def get_client_info(api_key):
+    conn = sqlite3.connect("clients.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, usage_count, usage_limit FROM clients WHERE api_key = ?", (api_key,))
+    result = cursor.fetchone()
+    conn.close()
+
+    if result:
+        name, usage_count, usage_limit = result
+        return {
+            "cliente": name,
+            "usos_realizados": usage_count,
+            "limite": usage_limit,
+            "restante": usage_limit - usage_count
+        }
+    return None
 
