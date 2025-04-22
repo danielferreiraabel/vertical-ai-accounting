@@ -52,4 +52,23 @@ def get_client_info(api_key):
             "restante": usage_limit - usage_count
         }
     return None
+    # Lista todas as chaves cadastradas
+def listar_todos_clientes():
+    conn = sqlite3.connect("clients.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, api_key, usage_count, usage_limit FROM clients")
+    resultados = cursor.fetchall()
+    conn.close()
+
+    lista = []
+    for row in resultados:
+        lista.append({
+            "cliente": row[0],
+            "api_key": row[1],
+            "usos_realizados": row[2],
+            "limite": row[3],
+            "restante": row[3] - row[2]
+        })
+    return lista
+
 
