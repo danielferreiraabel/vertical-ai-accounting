@@ -1,31 +1,36 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException, Header
 from pydantic import BaseModel
 import openai
 import os
+from db import init_db, validate_api_key, increment_usage
 
-# Pega a chave da variável de ambiente
+# Inicializa o banco de dados
+init_db()
+
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Cria o app FastAPI
 app = FastAPI(title="Vertical AI Accounting")
 
-# Modelo para receber a requisição
 class ExpenseIn(BaseModel):
     description: str
 
-# Endpoint de teste
 @app.get("/ping")
 def ping():
     return {"status": "ok"}
 
-# Endpoint principal de categorização
 @app.post("/categorize")
-async def categorize_expense(item: ExpenseIn):
+async def categorize_expense(
+    item: ExpenseIn,
+    request: Request,
+    x_api_key: str = Header(...)
+):
+    # Verifica a chave do cliente
+    if not validate_api_key(x_api_key):
+        raise HTTPException(status_code=403, detail="Chave inválida ou limite de uso atingido.")
+
     try:
-        # Inicializa o cliente da OpenAI
         client = openai.OpenAI(api_key=openai.api_key)
 
-        # Chamada à IA
         chat_completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -35,7 +40,7 @@ async def categorize_expense(item: ExpenseIn):
                         "Você é um assistente contábil profissional. "
                         "Classifique a despesa fornecida em uma categoria contábil adequada, "
                         "utilizando linguagem simples e sempre respondendo em português. "
-                        "Prefira categorias utilizadas no Brasil, como 'Aluguel', 'Transporte', 'Marketing', 'Serviços' etc."
+                        "Prefira categorias como Aluguel, Transporte, Serviços, Marketing, etc."
                     )
                 },
                 {
@@ -45,11 +50,12 @@ async def categorize_expense(item: ExpenseIn):
             ]
         )
 
-        # Resposta final para o usuário
+        # Marca mais 1 uso
+        increment_usage(x_api_key)
+
         return {
             "categoria": chat_completion.choices[0].message.content.strip()
         }
 
     except Exception as e:
-        # Erro tratado com retorno amigável
         return {"erro": str(e)}
