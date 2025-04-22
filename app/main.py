@@ -20,15 +20,20 @@ async def categorize_expense(item: ExpenseIn):
         client = openai.OpenAI(api_key=openai.api_key)
 
         chat_completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an accounting assistant."},
-                {"role": "user", "content": f"Classify this expense: {item.description}"}
-            ]
-        )
-
-        return {"category": chat_completion.choices[0].message.content.strip()}
-
-    except Exception as e:
-        return {"error": str(e)}
-
+    model="gpt-3.5-turbo",
+    messages=[
+        {
+            "role": "system",
+            "content": (
+                "Você é um assistente contábil profissional. "
+                "Classifique a despesa fornecida na categoria contábil apropriada, "
+                "usando linguagem simples e respondendo sempre em **português**. "
+                "Se possível, utilize nomes de categorias contábeis comuns no Brasil."
+            )
+        },
+        {
+            "role": "user",
+            "content": f"Classifique esta despesa: {item.description}"
+        }
+    ]
+)
