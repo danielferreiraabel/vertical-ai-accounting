@@ -67,3 +67,8 @@ def get_my_info(x_api_key: str = Header(...)):
     if info:
         return info
     raise HTTPException(status_code=403, detail="Chave inválida.")
+from db import listar_todos_clientes
+
+@app.get("/admin/listar-chaves")
+def listar_chaves_admin():
+    return listar_todos_clientes()
